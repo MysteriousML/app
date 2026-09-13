@@ -6,7 +6,16 @@ export const runtime = "nodejs";
 const InteractionType = { PING: 1, APPLICATION_COMMAND: 2 };
 const InteractionResponseType = { PONG: 1, CHANNEL_MESSAGE_WITH_SOURCE: 4 };
 
-function reply(content) {
+const ACCENT_COLOR = 0x5ec2a4; // matches the site's accent color
+
+function replyEmbed(embed) {
+  return Response.json({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: { embeds: [embed] },
+  });
+}
+
+function replyText(content) {
   return Response.json({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: { content },
@@ -48,7 +57,7 @@ export async function POST(req) {
       const attachment = interaction.data.resolved?.attachments?.[option?.value];
 
       if (!attachment) {
-        return reply("No file attached. Use `/upload file:<attach a script>`.");
+        return replyText("No file attached. Use `/upload file:<attach a script>`.");
       }
 
       try {
@@ -67,9 +76,19 @@ export async function POST(req) {
           contentType: attachment.content_type || "text/plain",
         });
 
-        return reply(`Uploaded **${safeName}** — by ${uploader}\n${blob.url}`);
+        return replyEmbed({
+          title: "Script uploaded",
+          color: ACCENT_COLOR,
+          fields: [
+            { name: "File", value: safeName, inline: true },
+            { name: "Uploaded by", value: uploader, inline: true },
+          ],
+          url: blob.url,
+          description: `[Open file](${blob.url})`,
+          timestamp: new Date().toISOString(),
+        });
       } catch (err) {
-        return reply(`Upload failed: ${err.message}`);
+        return replyText(`Upload failed: ${err.message}`);
       }
     }
 
@@ -80,15 +99,31 @@ export async function POST(req) {
           .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
           .slice(0, 10);
 
-        if (recent.length === 0) return reply("No scripts uploaded yet.");
+        if (recent.length === 0) {
+          return replyEmbed({
+            title: "Recent scripts",
+            color: ACCENT_COLOR,
+            description: "No scripts uploaded yet.",
+          });
+        }
 
-        const lines = recent.map((b) => {
+        const fields = recent.map((b) => {
           const { filename, uploader } = parseBlob(b.pathname);
-          return `• **${filename}** — ${uploader} — ${b.url}`;
+          return {
+            name: filename,
+            value: `by ${uploader} · [open](${b.url})`,
+          };
         });
-        return reply(lines.join("\n"));
+
+        return replyEmbed({
+          title: "Recent scripts",
+          color: ACCENT_COLOR,
+          fields,
+          footer: { text: `Showing ${recent.length} most recent` },
+          timestamp: new Date().toISOString(),
+        });
       } catch (err) {
-        return reply(`Couldn't list scripts: ${err.message}`);
+        return replyText(`Couldn't list scripts: ${err.message}`);
       }
     }
 
@@ -97,7 +132,7 @@ export async function POST(req) {
       const query = (nameOption?.value || "").toLowerCase();
 
       if (!query) {
-        return reply("Usage: `/getscript name:<part of the filename>`");
+        return replyText("Usage: `/getscript name:<part of the filename>`");
       }
 
       try {
@@ -105,13 +140,23 @@ export async function POST(req) {
         const match = blobs.find((b) => b.pathname.toLowerCase().includes(query));
 
         if (!match) {
-          return reply(`No script found matching **${query}**.`);
+          return replyEmbed({
+            title: "No match found",
+            color: 0xe0716b,
+            description: `No script found matching **${query}**.`,
+          });
         }
 
         const { filename, uploader } = parseBlob(match.pathname);
-        return reply(`**${filename}** — uploaded by ${uploader}\n${match.url}`);
+        return replyEmbed({
+          title: filename,
+          color: ACCENT_COLOR,
+          fields: [{ name: "Uploaded by", value: uploader, inline: true }],
+          url: match.url,
+          description: `[Open file](${match.url})`,
+        });
       } catch (err) {
-        return reply(`Couldn't find that script: ${err.message}`);
+        return replyText(`Couldn't find that script: ${err.message}`);
       }
     }
   }
