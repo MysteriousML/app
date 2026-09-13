@@ -1,4 +1,3 @@
-
 import { verifyKey } from "discord-interactions";
 import { put, list } from "@vercel/blob";
 
@@ -12,6 +11,13 @@ function reply(content) {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: { content },
   });
+}
+
+function parseBlob(pathname) {
+  const base = pathname.replace(/^scripts\//, "");
+  const [, uploader, ...nameParts] = base.split("__");
+  const filename = nameParts.join("__") || base;
+  return { filename, uploader: uploader || "unknown" };
 }
 
 export async function POST(req) {
@@ -61,7 +67,7 @@ export async function POST(req) {
           contentType: attachment.content_type || "text/plain",
         });
 
-        return reply(`Uploaded **${safeName}**\n${blob.url}`);
+        return reply(`Uploaded **${safeName}** — by ${uploader}\n${blob.url}`);
       } catch (err) {
         return reply(`Upload failed: ${err.message}`);
       }
@@ -77,12 +83,35 @@ export async function POST(req) {
         if (recent.length === 0) return reply("No scripts uploaded yet.");
 
         const lines = recent.map((b) => {
-          const name = b.pathname.split("__").pop();
-          return `• ${name} — ${b.url}`;
+          const { filename, uploader } = parseBlob(b.pathname);
+          return `• **${filename}** — ${uploader} — ${b.url}`;
         });
         return reply(lines.join("\n"));
       } catch (err) {
         return reply(`Couldn't list scripts: ${err.message}`);
+      }
+    }
+
+    if (commandName === "getscript") {
+      const nameOption = interaction.data.options?.find((o) => o.name === "name");
+      const query = (nameOption?.value || "").toLowerCase();
+
+      if (!query) {
+        return reply("Usage: `/getscript name:<part of the filename>`");
+      }
+
+      try {
+        const { blobs } = await list({ prefix: "scripts/" });
+        const match = blobs.find((b) => b.pathname.toLowerCase().includes(query));
+
+        if (!match) {
+          return reply(`No script found matching **${query}**.`);
+        }
+
+        const { filename, uploader } = parseBlob(match.pathname);
+        return reply(`**${filename}** — uploaded by ${uploader}\n${match.url}`);
+      } catch (err) {
+        return reply(`Couldn't find that script: ${err.message}`);
       }
     }
   }
