@@ -26,6 +26,18 @@ const commands = [
     name: "scripts",
     description: "List the 10 most recently uploaded scripts",
   },
+  {
+    name: "getscript",
+    description: "Find a script by (part of) its filename",
+    options: [
+      {
+        type: 3, // STRING
+        name: "name",
+        description: "Part of the filename to search for",
+        required: true,
+      },
+    ],
+  },
 ];
 
 const res = await fetch(
@@ -42,4 +54,3 @@ const res = await fetch(
 
 const data = await res.json();
 console.log(res.ok ? "Commands registered:" : "Failed:", JSON.stringify(data, null, 2));
-
