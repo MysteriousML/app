@@ -10,7 +10,7 @@ export default function Home() {
 
   async function loadScripts() {
     try {
-      const res = await fetch("/api/scripts");
+      const res = await fetch("/api/scripts", { cache: "no-store" });
       const data = await res.json();
       setScripts(data.scripts || []);
     } catch {
