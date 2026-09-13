@@ -23,7 +23,8 @@ body {
 main {
   max-width: 680px;
   margin: 0 auto;
-  padding: 64px 24px 80px;
+  padding: 48px 20px 80px;
+  overflow-x: hidden;
 }
 
 .title {
@@ -148,9 +149,9 @@ ul.scripts li {
   border-radius: 5px;
   margin-bottom: 8px;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 ul.scripts a {
@@ -158,6 +159,7 @@ ul.scripts a {
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 ul.scripts a:hover {
@@ -167,7 +169,6 @@ ul.scripts a:hover {
 .meta {
   color: var(--muted);
   font-size: 12px;
-  white-space: nowrap;
 }
 
 .empty {
