@@ -14,7 +14,8 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "@vercel/blob": "^0.23.4",
-    "discord-interactions": "^3.4.0"
+    "discord-interactions": "^3.4.0",
+    "discord.js": "^14.16.3"
   },
   "devDependencies": {
     "dotenv": "^16.4.5"
