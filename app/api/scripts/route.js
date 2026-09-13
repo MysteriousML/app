@@ -2,6 +2,7 @@ import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function parsePathname(pathname, fallbackDate) {
   const base = pathname.replace(/^scripts\//, "");
